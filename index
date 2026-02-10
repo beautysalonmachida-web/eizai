@@ -1024,16 +1024,23 @@
         reader.readAsDataURL(file);
         reader.onload = function() {
           showLoading(true, '領収書をアップロード中...');
+          // アップロード中はボタンを無効化
+          document.getElementById('M-submit-expense').disabled = true;
           google.script.run
             .withSuccessHandler(function(res) {
               showLoading(false);
+              document.getElementById('M-submit-expense').disabled = false;
               if (res.status === 'success') {
                   document.getElementById('M-receiptUrl').value = res.url;
-                  // 追加: 完了メッセージを短く表示しても良いが、ここではアラートまでは出さない
+                  showCustomAlert('領収書のアップロードが完了しました。');
               }
               else onApiError(res.message);
             })
-            .withFailureHandler(onApiError)
+            .withFailureHandler(function(error) {
+              showLoading(false);
+              document.getElementById('M-submit-expense').disabled = false;
+              onApiError(error);
+            })
             .uploadReceiptImage(reader.result, file.name);
         };
       }
@@ -1289,8 +1296,8 @@
               document.getElementById('C-header-status-badge').innerText = h['承認ステータス'];
               document.getElementById('C-header-apply-date').innerText = formatDateTime(h['申請日'] || h['作成日']);
               document.getElementById('C-header-mileage').innerText = h['本日の走行距離'] || h['走行距離'] || '0';
-              document.getElementById('C-header-movement-time').innerText = formatHours(h['移動時間合計']);
-              document.getElementById('C-header-meeting-time').innerText = formatHours(h['商談時間合計']);
+              document.getElementById('C-header-movement-time').innerText = formatHours(h['移動時間合計 (時間)'] || h['移動時間合計'] || 0);
+              document.getElementById('C-header-meeting-time').innerText = formatHours(h['商談時間合計 (時間)'] || h['商談時間合計'] || 0);
               document.getElementById('C-header-remarks').innerText = h['備考'] || '';
               
               var rejReason = h['差戻し理由'];
